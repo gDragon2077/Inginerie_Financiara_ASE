@@ -1,121 +1,113 @@
-# Inginerie_Financiara_ASE
+# Inginerie Financiară ASE
 
-[Deschide aplicația pe GitHub Pages](https://gdragon2077.github.io/Inginerie_Financiara_ASE/)
+Laborator interactiv pentru studiul opțiunilor financiare, strategiilor de tranzacționare și proceselor stocastice. Interfața este în limba română, iar calculele se execută integral în browser, fără backend, chei API sau servicii externe de cotații.
 
-Laborator interactiv în limba română pentru opțiuni, strategii, procese stocastice și modele de evaluare. Aplicația rulează local în browser; nu are backend, chei API sau dependențe de servicii de cotații.
+[Deschide aplicația](https://gdragon2077.github.io/Inginerie_Financiara_ASE/) · [Proiectul original](https://github.com/codrutivascu-ase/inginerie_financiara)
 
-## Pornire
+## Originea proiectului
 
-Este necesar Node.js 22.12 sau mai nou.
+Această versiune este o refactorizare a aplicației publicate în [codrutivascu-ase/inginerie_financiara](https://github.com/codrutivascu-ase/inginerie_financiara).
+
+Contribuția acestui repository constă în reorganizarea implementării într-o arhitectură modulară, separarea logicii financiare de interfață, centralizarea stării aplicației și configurarea procesului de compilare și publicare. Referința către proiectul de origine este păstrată explicit.
+
+## Funcționalități
+
+| Modul                 | Capabilități                                                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Black–Scholes         | Evaluarea opțiunilor pe acțiuni, active cu dividende, valută, futures și forwarduri; paritate put-call, Greeks și explicații pas cu pas. |
+| Model binomial CRR    | Opțiuni europene și americane, arbore recombinant, decizii de exercitare anticipată și convergență către Black–Scholes.                  |
+| Strategii cu opțiuni  | Option chain simulat, 13 strategii predefinite, poziții long/short, scadențe multiple, payoff, scenarii și Greeks agregați.              |
+| Procese stocastice    | Mișcare browniană standard, generalizată și geometrică, distribuții terminale și intervale de predicție.                                 |
+| Exerciții interactive | Probleme Black–Scholes și CRR generate automat, verificarea răspunsurilor și afișarea rezolvărilor.                                      |
+| Interfață             | Layout responsive, teme și grafice SVG interactive.                                                                                      |
+
+Laboratorul suplimentar pentru Greeks și delta-hedging este inclus în cod, dar nu este afișat în navigația implicită.
+
+Datele de piață sunt simulate. Aplicația are scop educațional; cotațiile, probabilitățile și estimările de marjă nu reprezintă date furnizate de un broker sau recomandări de investiții.
+
+## Tehnologii
+
+- JavaScript cu module ES native.
+- HTML semantic, CSS modular și grafice SVG.
+- Vite pentru dezvoltare și compilare.
+- Prettier pentru formatarea codului.
+- GitHub Actions și GitHub Pages pentru verificare și publicare.
+
+## Instalare și rulare locală
+
+Este necesar **Node.js 22.12 sau mai nou**, împreună cu npm.
 
 ```sh
+git clone https://github.com/gDragon2077/Inginerie_Financiara_ASE.git
+cd Inginerie_Financiara_ASE
 npm ci
 npm run dev
 ```
 
-Deschide adresa afișată de Vite. Pentru o versiune optimizată:
+Deschide adresa afișată de Vite. Aplicația trebuie servită prin HTTP; deschiderea directă a fișierului `index.html` prin `file://` nu este suportată.
+
+### Compilare pentru publicare
 
 ```sh
 npm run build
 npm run preview
 ```
 
-Directorul `dist/` poate fi servit de un server HTTP static. Modulele ES necesită HTTP; deschiderea directă a fișierului HTML prin `file://` nu este modul de rulare suportat.
+Compilarea generează directorul `dist/`. Comanda `preview` permite verificarea locală a acestei versiuni și nu este destinată utilizării ca server de producție.
 
-### GitHub Pages
+Configurația `base` din `vite.config.js` folosește prefixul `/Inginerie_Financiara_ASE/`. Dacă publici aplicația sub alt nume de repository sau într-un alt director, adaptează această valoare.
 
-Publicarea curentă folosește **GitHub Actions** ca sursă în Settings → Pages. Workflow-ul `.github/workflows/ci.yml` verifică formatarea și compilează aplicația. Numai la un push în `main`, după trecerea acestor verificări, publică întregul director `dist/` în mediul `github-pages`. Pull request-urile sunt doar verificate, fără publicare.
-
-Configurația Vite păstrează prefixul `/Inginerie_Financiara_ASE/` pentru fișierele compilate. `npm run preview` afișează această variantă sub același prefix. Dacă publici proiectul într-un alt director sau sub alt nume de repository, actualizează `base` din `vite.config.js`.
-
-Permisiunile `pages: write` și `id-token: write` sunt limitate la jobul de publicare, separat de instalarea dependențelor și de compilare. Identitatea temporară GitHub verifică originea publicării; nu este necesar un token personal. Fiecare încercare de build are un artefact cu nume distinct, iar jobul de publicare primește exact numele artefactului verificat, inclusiv la reluarea unui job eșuat. Publicările sunt serializate.
-
-Aplicația poate fi servită și fără compilare: codul folosește module ES native și CSS standard. Căile relative din `index.html` încarcă resursele din directorul proiectului, nu din rădăcina domeniului. Acesta nu este modul curent de publicare pe GitHub Pages.
-
-## Funcționalități păstrate
-
-- Option chain simulat, BID/ASK, 13 strategii predefinite și builder cu poziții long/short, cantități, loturi spot, scadențe multiple, scenarii, payoff și Greeks agregați.
-- Black–Scholes generalizat pentru acțiuni, dividende, valută, futures și forwarduri; paritate put-call și rezolvare pas cu pas.
-- CRR european/american: arbore recombinant, decizii de exercitare, formulă combinatorică și convergență.
-- Mișcare browniană standard/generalizată/geometrică, histograme, distribuții terminale și intervale de predicție.
-- Exerciții BS/CRR generate automat, verificarea răspunsurilor, soluții și scoruri separate.
-- Interfață responsive, teme și interacțiuni mouse/touch pe grafice.
-
-Laboratorul separat Greeks/delta-hedging este păstrat. Rămâne ascuns în navigația implicită, la fel ca în fișierul primit; Greeks agregate din builder sunt vizibile. Activarea laboratorului separat presupune eliminarea atributelor `hidden` de pe butonul `data-tab="greeks"` și secțiunea `pane-greeks` din `index.html`.
-
-## Structură
+## Structura proiectului
 
 ```text
-index.html                  Structura semantică și conținutul didactic
+index.html                 Structura paginii și conținutul didactic
 src/
-  main.js                   Inițializare și legarea modulelor
-  domain/                   Funcții pure, fără DOM sau acces la store
-    black-scholes.js        Evaluare, paritate și sensibilități analitice
-    binomial.js             CRR, arbore, evaluare combinatorică și Greeks numerice
-    configurations.js       Activul suport și convențiile cost-of-carry
-    deterministic.js        Cazuri cu maturitate/volatilitate zero
-    strategies.js           Quote, payoff, extreme, break-even, probabilități, marjă
-    portfolio.js            Agregarea opțiunilor unui portofoliu
-    simulation.js           Procese stocastice, distribuții și hedging
-    normal.js               Distribuția normală și generatorul reproductibil
-    validation.js           Invariantele intrărilor financiare
-    constants.js            Unități și convenții comune
-    exercise-generator.js   Generarea parametrilor exercițiilor
-  state/
-    store.js                Unicul model de stare observabil
-    controls.js             Adaptarea evenimentelor și valorilor formularelor
+  main.js                  Inițializarea aplicației
+  domain/                  Modele financiare, portofolii și simulări
+  state/                   Starea centralizată și adaptarea controalelor
   ui/
-    pricing/                Formular, explicații, rezultate, arbore, convergență
-    strategies/             Catalog, selectori, grafice, randare, evenimente
-    labs/                   Simulări, Greeks, hedging și hover
-    charts/                 Primitive SVG comune
-    exercises.js            Fluxul exercițiilor și feedback
-    dom.js                  Acces DOM și formatare/escaping
-    scheduler.js            Gruparea randărilor și afișarea erorilor
-    shell.js                Navigație și temă
-  styles/                   Tokens, bază, componente, strategii, laboratoare, responsive
-.github/workflows/ci.yml     Verificări și publicarea buildului validat din main
+    pricing/               Formulare, rezultate și vizualizări BS/CRR
+    strategies/            Catalogul de strategii și constructorul de poziții
+    labs/                  Simulări, Greeks și hedging
+    charts/                Primitive SVG comune
+  styles/                  Stiluri de bază, componente și reguli responsive
+.github/workflows/ci.yml    Verificare și publicare automată
+vite.config.js             Configurația compilării și a căilor publice
 ```
 
-Dependențele urmează direcția `UI → state/selectori → domain`. Modulele `domain/` nu importă `ui/`, `state/`, `document` sau `window`. Pot fi folosite separat în Node.js ori într-un alt frontend.
+### Principii de arhitectură
 
-## Stare și randare
+- **Logică financiară independentă:** modulele din `domain/` nu accesează DOM-ul și nu depind de interfață sau de starea aplicației.
+- **O singură sursă de stare:** datele formularelor, pozițiile și configurațiile sunt gestionate printr-un model centralizat.
+- **Responsabilități separate:** interfața adaptează datele pentru calcul și prezintă rezultatele; graficele și stilurile sunt organizate în module dedicate.
 
-`store.state` deține `pricing`, `controls`, `strategy`, `simulation`, `exercises` și `ui`. Proxy-urile observă inclusiv modificările pozițiilor și array-urilor; `store.transaction()` grupează notificările, iar `store.subscribe()` permite observatori cu dezabonare. Store-ul este în memorie și se resetează la reîncărcare.
+Pentru funcționalități noi, implementează mai întâi logica în `domain/`, apoi integrează datele în `state/` și interacțiunile în `ui/`.
 
-Câmpurile de pricing sunt citite direct din ramura `pricing`, inclusiv de adaptorul formularelor. Celelalte controale au valori în `controls`. Citirile pentru calcule folosesc modelul; DOM-ul reprezintă vederea. Evenimentele sunt validate în faza de captură, înaintea controllerelor. O valoare goală sau invalidă nu înlocuiește ultima valoare numerică acceptată. Erorile de model apar într-un mesaj vizibil.
+## Convenții de calcul
 
-Funcțiile din `ui/strategies/model.js` și `ui/labs/portfolio.js` construiesc explicit parametrii pentru funcțiile pure. Previzualizările strategiilor nu consumă ID-uri de poziții. Poziția inițială este deterministă, pentru a face reproducerea problemelor posibilă.
+- Ratele și volatilitatea sunt reprezentate intern ca fracții: `0.05` înseamnă 5%. Timpul este exprimat în ani.
+- Prețurile opțiunilor sunt calculate per unitate. Un contract reprezintă 100 de unități, iar pozițiile spot sunt exprimate în acțiuni.
+- Greeks sunt calculate în convențiile motorului financiar și convertite în interfață pentru afișare, inclusiv Theta pe zi și Vega/Rho la un punct procentual.
+- Pentru strategii cu scadențe multiple, opțiunile rămase sunt reevaluate la prima scadență; extremele payoff-ului și pragurile de rentabilitate sunt estimări numerice.
+- Probabilitățile de profit folosesc distribuția risk-neutral a modelului, iar estimările de marjă au caracter orientativ.
 
-Randările costisitoare sunt grupate prin `requestAnimationFrame`, cu maximum o lucrare pentru fiecare cheie într-un cadru. Evenimentele pe poziții folosesc delegare. Fragmentele calculate și SVG-urile sunt randate local, fără reconstruirea formularului comun; textele variabile sunt formatate sau escaped la granița de prezentare. Graficele și explicațiile păstrează șabloane HTML/SVG explicite.
-
-## Convenții numerice
-
-- Ratele, dividendele și volatilitatea din domain sunt fracții: `0.05` înseamnă 5%. Timpul este în ani, cu 365 zile/an în adaptorul strategiilor.
-- `blackScholes()` întoarce preț per unitate, Vega/Rho la o variație de 1.0 și Theta pe an calendaristic (`−∂V/∂T`). UI convertește Vega/Rho la un punct procentual și Theta la o zi.
-- Pentru forward calculat din spot, `delta`/`gamma` sunt față de prețul forward, iar `deltaSpot`/`gammaSpot` includ transformarea față de spot. Rho include dependența forwardului de dobândă. Theta păstrează `Tf` fix.
-- Un contract de opțiuni reprezintă 100 unități; cantitățile spot sunt acțiuni efective.
-- CRR respinge probabilități risk-neutral în afara `[0, 1]`, pași neîntregi și peste 2000. Maturitatea și volatilitatea zero au ramuri deterministe explicite.
-- La expirare, Delta ATM folosește convenția de jumătate din salt, Gamma/Vega/Theta sunt zero. Aceste valori sunt convenții de afișare la un payoff nederivabil.
-- Pentru scadență unică, extremele și break-even-urile payoff-ului sunt calculate pe segmentele dintre strike-uri; riscul nelimitat este dedus din panta cozii. Pentru scadențe multiple, valorile opțiunilor rămase sunt reevaluate BS, iar extremele/rădăcinile sunt estimări numerice (`approximate: true`).
-- Probabilitatea de profit folosește distribuția risk-neutral a modelului; marja este o estimare didactică. Aceste convenții continuă comportamentul aplicației originale.
-
-## Verificări
+## Verificare și publicare
 
 ```sh
 npm run format:check
 npm run build
-npm run preview
 ```
 
-Repository-ul nu include o suită de teste automate. Verificările de formatare și compilare nu validează corectitudinea calculelor financiare. După modificări, verifică manual rezultatele modelelor, selecția pozițiilor, formularele, exercițiile, simulările, temele și graficele în versiunea afișată de `npm run preview`.
+Verificările automate curente acoperă formatarea și compilarea. Repository-ul nu include o suită de teste automate; corectitudinea numerică a modelelor și comportamentul interfeței trebuie verificate separat după modificări.
 
-## Migrare și mentenanță
+Publicarea pe GitHub Pages este gestionată de `.github/workflows/ci.yml`:
 
-Sursa primită: `Pasted text.txt`, SHA-256 `27fa73686f2b9890e160a1d25fed392e3660c03c6206820968409386e8c8e40a`. Prima versiune arhivată în istoricul Git păstrează monolitul pentru comparație; sursa activă este exclusiv cea modulară.
+1. Instalează dependențele din `package-lock.json`.
+2. Verifică formatarea și compilează aplicația.
+3. Publică directorul `dist/` numai pentru modificările din `main` care trec verificările.
 
-Migrarea include corecții pentru discountarea la volatilitate zero, Rho când cost-of-carry este zero, sensibilitățile forwardurilor inferate și Theta la decontare amânată. Distribuția randamentelor logaritmice folosește aceeași corecție Itô ca procesul geometric, iar BID nu poate depăși prețul mediu/ASK. CSS-ul are definiții consolidate pe selector și condiție media, cu override-urile finale absorbite în stilurile componentelor.
+Pull request-urile sunt verificate fără publicare. În **Settings → Pages**, sursa de publicare trebuie să rămână **GitHub Actions**.
 
-Pentru o funcționalitate nouă: implementează întâi funcția pură în `domain/` și verifică manual rezultatele, adaugă datele în store, apoi selectorul și interacțiunea UI. Evită citirile DOM în motorul financiar și adăugarea unor corecții CSS la sfârșitul fișierelor; modifică regula componentei și breakpoint-ul corespunzător.
+## Licență
 
-Licența existentă a repository-ului este păstrată în `LICENSE`.
+Fișierul [LICENSE](LICENSE) al acestui repository conține licența **Apache License 2.0**. Pentru informațiile de licențiere ale proiectului de origine, consultați separat [repository-ul original](https://github.com/codrutivascu-ase/inginerie_financiara).
