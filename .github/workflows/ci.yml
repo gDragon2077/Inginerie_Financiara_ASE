@@ -29,12 +29,12 @@ jobs:
         with:
           script: |
             const { data: site } = await github.rest.repos.getPages(context.repo);
-            if (site.build_type !== 'legacy') {
-              core.notice('Pages deployment is managed by a separate workflow.');
-              return;
-            }
+            core.info('Pages configuration: ' + JSON.stringify({
+              source: site.source,
+              build_type: site.build_type ?? 'not reported'
+            }));
             const { data: latest } = await github.rest.repos.getLatestPagesBuild(context.repo);
-            if (latest.commit === context.sha) {
+            if (latest.commit === context.sha && ['built', 'building', 'queued'].includes(latest.status)) {
               core.notice('Pages already has a build for this commit.');
               return;
             }
