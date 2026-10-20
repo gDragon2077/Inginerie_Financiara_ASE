@@ -17,3 +17,26 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+  refresh-pages:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+    steps:
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: site } = await github.rest.repos.getPages(context.repo);
+            if (site.build_type !== 'legacy') {
+              core.notice('Pages deployment is managed by a separate workflow.');
+              return;
+            }
+            const { data: latest } = await github.rest.repos.getLatestPagesBuild(context.repo);
+            if (latest.commit === context.sha) {
+              core.notice('Pages already has a build for this commit.');
+              return;
+            }
+            await github.rest.repos.requestPagesBuild(context.repo);
+            core.notice('Requested a fresh Pages build from the latest source revision.');
