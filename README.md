@@ -1,4 +1,4 @@
-# Sistem Analiza Pozitii
+# Inginerie_Financiara_ASE
 
 Laborator interactiv în limba română pentru opțiuni, strategii, procese stocastice și modele de evaluare. Aplicația rulează local în browser; nu are backend, chei API sau dependențe de servicii de cotații.
 
