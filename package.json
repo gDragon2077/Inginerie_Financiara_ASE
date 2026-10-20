@@ -1,0 +1,24 @@
+{
+  "name": "inginerie-financiara-ase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Laborator interactiv de inginerie financiară: opțiuni, strategii, CRR și simulări.",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.10",
+    "vite": "^8.3.4"
+  }
+}

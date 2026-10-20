@@ -1,0 +1,1018 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Seminar Inginerie Financiară</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div class="tip" id="tip"></div>
+
+    <header class="top">
+      <div class="wrap">
+        <div class="top-in">
+          <div class="brand">
+            <h1>Seminar Inginerie Financiară</h1>
+          </div>
+          <div class="spacer"></div>
+          <button class="theme-btn" id="themeBtn" type="button">Temă</button>
+        </div>
+        <nav class="tabs" role="tablist">
+          <button role="tab" data-tab="strategii" aria-selected="true">Strategii cu opțiuni</button>
+          <button role="tab" data-tab="brownian" aria-selected="false">Mișcare browniană</button>
+          <button role="tab" data-tab="crr" aria-selected="false">Modelul binomial (CRR)</button>
+          <button role="tab" data-tab="bs" aria-selected="false">Black-Scholes</button>
+          <button role="tab" data-tab="greeks" aria-selected="false" hidden>Greeks</button>
+        </nav>
+      </div>
+    </header>
+
+    <div id="appError" class="app-error" role="alert" hidden></div>
+    <main class="wrap">
+      <!-- ===================== CONFIGURATIA CENTRALA (un singur nod DOM, mutat intre taburi) ===================== -->
+      <div class="panel cfgcard" id="configPanel">
+        <div class="ph"><h3>Configurație — comună pentru ambele modele</h3></div>
+        <div class="pb">
+          <div class="cfgtop">
+            <div class="field">
+              <label class="fl" for="cfg">Activ suport</label>
+              <select id="cfg"></select>
+              <div class="hint" id="cfgHint"></div>
+            </div>
+            <div class="field">
+              <label class="fl">Tip opțiune</label>
+              <div class="seg" id="segTip">
+                <button type="button" data-v="call" aria-pressed="true">Call</button>
+                <button type="button" data-v="put" aria-pressed="false">Put</button>
+              </div>
+            </div>
+            <div class="field" id="f_stil">
+              <label class="fl">Stil</label>
+              <div class="seg" id="segStil">
+                <button type="button" data-v="european" aria-pressed="true">European</button>
+                <button type="button" data-v="american" aria-pressed="false">American</button>
+              </div>
+            </div>
+          </div>
+          <div class="cfggrid">
+            <div class="field">
+              <label class="fl" for="in_S" id="lab_S">S₀ — preț spot</label
+              ><input type="text" id="in_S" inputmode="decimal" />
+            </div>
+            <div class="field">
+              <label class="fl" for="in_K">K — preț de exercitare</label
+              ><input type="text" id="in_K" inputmode="decimal" />
+            </div>
+            <div class="field">
+              <label class="fl" for="in_T">T — scadență (ani)</label
+              ><input type="text" id="in_T" inputmode="decimal" />
+            </div>
+            <div class="field">
+              <label class="fl" for="in_sigma">σ — volatilitate (%)</label
+              ><input type="text" id="in_sigma" inputmode="decimal" />
+            </div>
+            <div class="field">
+              <label class="fl" for="in_r" id="lab_r">r — rată fără risc (%)</label
+              ><input type="text" id="in_r" inputmode="decimal" />
+            </div>
+            <div class="field" id="f_q">
+              <label class="fl" for="in_q">q — randament dividend (%)</label
+              ><input type="text" id="in_q" inputmode="decimal" />
+            </div>
+            <div class="field" id="f_rf">
+              <label class="fl" for="in_rf">r<sub>f</sub> — rată externă (%)</label
+              ><input type="text" id="in_rf" inputmode="decimal" />
+            </div>
+            <div class="field" id="f_Tf">
+              <label class="fl" for="in_Tf">T<sub>F</sub> — scadență forward (ani)</label
+              ><input type="text" id="in_Tf" inputmode="decimal" />
+            </div>
+          </div>
+          <div class="field" id="f_settle">
+            <label class="chk"
+              ><input type="checkbox" id="in_settleTf" />
+              <span>Decontare la scadența forwardului T<sub>F</sub> (nu la T)</span></label
+            >
+            <div class="hint">
+              Dacă opțiunea exercitată la <i>T</i> livrează un contract forward care se decontează
+              abia la <i>T<sub>F</sub></i
+              >, prețul se actualizează suplimentar cu e<sup>−r(T<sub>F</sub>−T)</sup>.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== TAB 1: BLACK-SCHOLES ===================== -->
+      <section class="tabpane" id="pane-bs">
+        <div class="cfgmount" id="cfgMount-bs"></div>
+
+        <div class="cards" id="cardsBS"></div>
+        <div id="alertsBS"></div>
+
+        <div class="stack" style="margin-top: 20px">
+          <div class="panel">
+            <div class="ph"><h3>Formula Black–Scholes generalizată</h3></div>
+            <div class="pb">
+              <div class="fx big" style="text-align: center; margin: 2px 0 14px">
+                <i>c</i> = <i>S</i>·e<sup>−<i>q</i>τ</sup>·<i>N</i>(<i>d</i><sub>1</sub>) −
+                <i>K</i>·e<sup>−<i>r</i>τ</sup>·<i>N</i>(<i>d</i><sub>2</sub>)<br />
+                <i>p</i> = <i>K</i>·e<sup>−<i>r</i>τ</sup>·<i>N</i>(−<i>d</i><sub>2</sub>) −
+                <i>S</i>·e<sup>−<i>q</i>τ</sup>·<i>N</i>(−<i>d</i><sub>1</sub>)<br />
+                <i>d</i><sub>1</sub> = [ln(<i>S</i>/<i>K</i>) + (<i>r</i>−<i>q</i> + σ²/2)τ] /
+                (σ√τ), &nbsp; <i>d</i><sub>2</sub> = <i>d</i><sub>1</sub> − σ√τ<br />
+                <span style="font-size: 14px; color: var(--muted)"
+                  >unde τ = <i>T</i> − <i>t</i>, iar <i>q</i> este randamentul continuu echivalent
+                  al activului suport.</span
+                >
+              </div>
+              <table class="t" id="bsConfigTable"></table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph"><h3>Rezolvarea pas cu pas</h3></div>
+            <div class="stepbody" id="stepsBS"></div>
+          </div>
+        </div>
+
+        <div class="tabhead">Exerciții — Black-Scholes</div>
+        <div class="subhead">
+          Probleme generate automat, cu rezolvare completă afișată la cerere
+        </div>
+        <div class="split">
+          <div class="side">
+            <div class="panel">
+              <div class="ph"><h3>Setări</h3></div>
+              <div class="pb">
+                <div class="field">
+                  <label class="fl" for="exbs_Type">Tipul întrebării</label>
+                  <select id="exbs_Type">
+                    <option value="mix">Amestecat</option>
+                    <option value="bs">Preț Black-Scholes</option>
+                    <option value="d1d2">d₁ și d₂</option>
+                    <option value="parity">Paritatea put-call</option>
+                    <option value="delta">Delta</option>
+                    <option value="fwd">Prețul forward F₀</option>
+                    <option value="carry">Randamentul echivalent q</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="fl">Configurații incluse</label>
+                  <div id="exbs_Cfgs"></div>
+                </div>
+                <div class="btnrow">
+                  <button class="btn primary" type="button" id="exbs_New">Problemă nouă</button>
+                </div>
+                <div class="score" style="margin-top: 16px">
+                  <span>Corecte: <b id="exbs_ScOk">0</b></span
+                  ><span>Total: <b id="exbs_ScTot">0</b></span>
+                  <span id="exbs_ScPct" style="color: var(--muted)"></span>
+                </div>
+                <div class="btnrow" style="margin-top: 10px">
+                  <button
+                    class="btn"
+                    type="button"
+                    id="exbs_Reset"
+                    style="padding: 5px 10px; font-size: 12.5px"
+                  >
+                    resetează scorul
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="panel">
+              <div class="ph"><h3>Problemă</h3></div>
+              <div class="pb">
+                <div id="exbs_Problem"></div>
+                <div class="answers" id="exbs_Answers"></div>
+                <div id="exbs_Feedback"></div>
+                <div class="btnrow">
+                  <button class="btn primary" type="button" id="exbs_Check">Verifică</button>
+                  <button class="btn" type="button" id="exbs_Sol">Arată rezolvarea</button>
+                </div>
+              </div>
+              <div id="exbs_Solution"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TAB 2: MODELUL BINOMIAL (CRR) ===================== -->
+      <section class="tabpane" id="pane-crr">
+        <div class="cfgmount" id="cfgMount-crr"></div>
+
+        <div class="panel" style="margin-bottom: 20px">
+          <div class="ph nctrl">
+            <h3
+              style="text-transform: none; font-size: 13.5px; letter-spacing: 0; color: var(--ink2)"
+            >
+              Numărul de pași ai arborelui (unic pentru preț, tabel, pași și formula combinatorică)
+            </h3>
+            <div class="spacer"></div>
+            <label class="fl" style="margin: 0" for="in_n">n = <b id="nOut">5</b></label>
+            <input type="range" id="in_n" min="1" max="9" value="5" style="width: 220px" />
+          </div>
+        </div>
+
+        <div class="cards" id="cardsCRR"></div>
+        <div id="alertsCRR"></div>
+
+        <div class="stack" style="margin-top: 20px">
+          <div class="panel">
+            <div class="ph"><h3>Parametrii arborelui</h3></div>
+            <div class="pb" style="padding-top: 6px">
+              <table class="t" id="tabParamsCRR"></table>
+              <div id="crrQNote"></div>
+            </div>
+          </div>
+
+          <div class="panel treehero">
+            <div class="ph"><h3>Arborele recombinant</h3></div>
+            <div class="pb">
+              <div class="hint" style="margin-bottom: 12px">
+                Arborele folosește parametrii din configurația de mai sus, cu toți cei
+                <b>n</b> pași. Fiecare nod arată prețul activului suport (sus) și valoarea opțiunii
+                (jos) — pentru stilul american, valoarea de continuare și cea de exercitare, cu cea
+                mai mare colorată. Treceți cu mouse-ul peste un nod pentru formula folosită în acel
+                nod.
+              </div>
+              <div class="scrollx tree-scroll"><svg id="treeSvg"></svg></div>
+              <div class="legend" id="treeLegend"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph"><h3>Rezolvarea pas cu pas — inducție inversă</h3></div>
+            <div class="stepbody" id="stepsCRR"></div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <h3>Calcul alternativ pentru opțiuni europene — formula combinatorică</h3>
+            </div>
+            <div class="stepbody" id="stepsCombo"></div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <h3>Convergența către Black-Scholes</h3>
+              <div class="spacer"></div>
+              <label class="fl" style="margin: 0" for="convN"
+                >n maxim:&nbsp;<b id="convNOut">120</b></label
+              >
+              <input type="range" id="convN" min="20" max="400" value="120" style="width: 140px" />
+            </div>
+            <div class="pb">
+              <div id="convChart"></div>
+              <div class="legend" id="convLegend"></div>
+              <div class="note" id="convNote"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabhead">Exerciții — arbore binomial</div>
+        <div class="subhead">Calcul manual pe 2–3 pași, verificat instantaneu</div>
+        <div class="split">
+          <div class="side">
+            <div class="panel">
+              <div class="ph"><h3>Setări</h3></div>
+              <div class="pb">
+                <div class="field">
+                  <label class="fl" for="excrr_Type">Tipul întrebării</label>
+                  <select id="excrr_Type">
+                    <option value="mix">Amestecat</option>
+                    <option value="crr">Preț binomial (2–3 pași)</option>
+                    <option value="params">Parametrii arborelui (u, d, p)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="fl">Configurații incluse</label>
+                  <div id="excrr_Cfgs"></div>
+                </div>
+                <div class="field">
+                  <label class="chk"
+                    ><input type="checkbox" id="excrr_Amer" /><span
+                      >include opțiuni americane</span
+                    ></label
+                  >
+                </div>
+                <div class="btnrow">
+                  <button class="btn primary" type="button" id="excrr_New">Problemă nouă</button>
+                </div>
+                <div class="score" style="margin-top: 16px">
+                  <span>Corecte: <b id="excrr_ScOk">0</b></span
+                  ><span>Total: <b id="excrr_ScTot">0</b></span>
+                  <span id="excrr_ScPct" style="color: var(--muted)"></span>
+                </div>
+                <div class="btnrow" style="margin-top: 10px">
+                  <button
+                    class="btn"
+                    type="button"
+                    id="excrr_Reset"
+                    style="padding: 5px 10px; font-size: 12.5px"
+                  >
+                    resetează scorul
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="stack">
+            <div class="panel">
+              <div class="ph"><h3>Problemă</h3></div>
+              <div class="pb">
+                <div id="excrr_Problem"></div>
+                <div class="answers" id="excrr_Answers"></div>
+                <div id="excrr_Feedback"></div>
+                <div class="btnrow">
+                  <button class="btn primary" type="button" id="excrr_Check">Verifică</button>
+                  <button class="btn" type="button" id="excrr_Sol">Arată rezolvarea</button>
+                </div>
+              </div>
+              <div id="excrr_Solution"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TAB 3: STRATEGII CU OPTIUNI ===================== -->
+      <section class="tabpane on" id="pane-strategii">
+        <div class="strategy-hero">
+          <div>
+            <div class="eyebrow">PAYOFF LAB</div>
+            <h2>Strategii cu opțiuni</h2>
+          </div>
+          <div class="market-pill">
+            <span class="live-dot"></span><span>SIMULARE</span
+            ><b id="stratSpotBadge">SPOT 100,00</b>
+          </div>
+        </div>
+
+        <div class="panel strat-section strategy-catalog">
+          <div class="ph">
+            <div>
+              <div class="section-no">02</div>
+              <h3>Strategii predefinite</h3>
+            </div>
+            <div class="hint">Click pe o strategie pentru a o încărca în builder</div>
+          </div>
+          <div class="pb"><div class="strategy-list" id="presetGrid"></div></div>
+        </div>
+
+        <div class="panel strat-section chain-section">
+          <div class="ph">
+            <div>
+              <div class="section-no">01</div>
+              <h3>Option chain &amp; Strategy Builder</h3>
+            </div>
+            <button class="btn close-all" id="clearStrategy" type="button">Close All</button>
+          </div>
+          <div class="pb">
+            <div class="chain-controls">
+              <div>
+                <label class="fl" for="chainSpot">Preț spot</label
+                ><input id="chainSpot" type="number" value="100" min="10" step="1" />
+              </div>
+              <div>
+                <label class="fl" for="chainVol">Volatilitate</label
+                ><input id="chainVol" type="number" value="25" min="1" max="150" step="1" />
+              </div>
+              <div>
+                <label class="fl" for="chainRate">Rată fără risc</label
+                ><input id="chainRate" type="number" value="5" step="0.25" />
+              </div>
+              <div>
+                <label class="fl" for="chainStep">Pas strike</label
+                ><select id="chainStep">
+                  <option value="1">1</option>
+                  <option value="2.5" selected>2,5</option>
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+              <div>
+                <label class="fl" for="chainCount">Număr opțiuni</label
+                ><select id="chainCount">
+                  <option value="11">11</option>
+                  <option value="15" selected>15</option>
+                  <option value="21">21</option>
+                  <option value="31">31</option>
+                </select>
+              </div>
+              <input id="chainDays" type="hidden" value="60" />
+            </div>
+            <div class="expiry-row">
+              <div class="expiry-row-head">
+                <span class="expiry-label">Scadență</span
+                ><span class="expiry-hint"
+                  >Poți combina poziții din scadențe diferite în același builder (calendar/diagonal
+                  spreads)</span
+                >
+              </div>
+              <div class="expiry-tabs" id="expiryTabs"></div>
+            </div>
+            <div class="builder-layout">
+              <div class="chain-wrap">
+                <div class="chain-head"><span>CALLS</span><span>STRIKE</span><span>PUTS</span></div>
+                <div class="contract-notice">
+                  <b>1 contract = 100 unități</b
+                  ><span
+                    >Primele din chain sunt cotate per unitate; builderul afișează debitul, creditul
+                    și P&amp;L-ul pentru întregul contract.</span
+                  >
+                </div>
+                <div class="scrollx"><table class="option-chain" id="optionChain"></table></div>
+                <div class="chain-help">
+                  Apasă pe BID pentru SELL și pe ASK pentru BUY. Prețurile sunt simulate cu
+                  Black–Scholes.
+                </div>
+              </div>
+              <div class="builder-side">
+                <div class="chart-shell">
+                  <div class="chart-top">
+                    <div>
+                      <b>Strategia ta</b><small id="builderSubtitle">Profit la scadență</small>
+                    </div>
+                    <div class="chart-zoom">
+                      <label for="chartRange">Interval afișat</label
+                      ><input
+                        id="chartRange"
+                        type="range"
+                        min="10"
+                        max="150"
+                        value="55"
+                        step="5"
+                      /><output id="chartRangeOut">±55%</output>
+                    </div>
+                    <div class="chart-legend"><span class="line-profit"></span>Payoff</div>
+                  </div>
+                  <div id="builderChart"></div>
+                </div>
+                <div class="summary-strip" id="strategySummary"></div>
+                <div class="margin-note">
+                  Margin impact este orientativ: risc maxim pentru poziții cu risc definit, 50% din
+                  valoarea spot pentru loturi și o aproximație Reg-T pentru opțiuni short
+                  neacoperite. Brokerii pot aplica reguli diferite.
+                </div>
+              </div>
+            </div>
+            <div class="positions-head" style="margin-top: 18px">
+              <h4>Greeks — poziția curentă</h4>
+              <span class="hint"
+                >sensibilități Black-Scholes pentru combinația construită mai sus</span
+              >
+            </div>
+            <div class="strategy-greeks" id="strategyGreeks"></div>
+            <div class="spot-actions">
+              <div>
+                <b>Activ suport — lot de 100</b
+                ><span
+                  >Un lot de 100 de acțiuni acoperă un contract și permite covered call, protective
+                  put, collar sau hedging.</span
+                >
+              </div>
+              <button class="btn spot-buy" id="buySpot" type="button">BUY 100 Spot</button
+              ><button class="btn spot-sell" id="sellSpot" type="button">SELL 100 Spot</button>
+            </div>
+            <div class="positions-head">
+              <h4>Poziții selectate</h4>
+              <span id="positionCount">0 poziții</span>
+            </div>
+            <div class="positions" id="positions"></div>
+            <div class="scenario-bar">
+              <label class="fl"
+                >Rezultat dacă la scadență spotul este
+                <output id="scenarioOut">100,00</output></label
+              ><input id="scenarioSpot" type="range" min="20" max="200" value="100" step="1" />
+            </div>
+            <div class="result-table-wrap" id="resultTable"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TAB: MISCARE BROWNIANA SI ITO ===================== -->
+      <section class="tabpane" id="pane-brownian">
+        <div class="lab-hero brownian-hero">
+          <div>
+            <div class="eyebrow">STOCHASTIC LAB</div>
+            <h2>De la zgomot aleator la intervale pentru preț</h2>
+          </div>
+          <div class="formula-chip">dB<sub>t</sub> ~ N(0, dt)</div>
+        </div>
+        <div class="panel sim-controls">
+          <div class="ph">
+            <h3>Parametrii simulării</h3>
+            <button class="btn primary" id="bmResim" type="button">Simulare nouă</button>
+          </div>
+          <div class="pb lab-controls">
+            <div>
+              <label class="fl">Traiectorii</label
+              ><select id="bmPaths">
+                <option selected>1</option>
+                <option>5</option>
+                <option>20</option>
+                <option>50</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Pași</label
+              ><select id="bmSteps">
+                <option>50</option>
+                <option selected>252</option>
+                <option>500</option>
+                <option>1000</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Orizont T (ani)</label
+              ><input id="bmT" type="number" value="1" min="0.1" max="10" step="0.1" />
+            </div>
+            <div>
+              <label class="fl">Drift μ (%)</label
+              ><input id="bmMu" type="number" value="8" step="1" />
+            </div>
+            <div>
+              <label class="fl">Volatilitate σ (%)</label
+              ><input id="bmSigma" type="number" value="25" min="1" step="1" />
+            </div>
+          </div>
+        </div>
+        <div class="process-stack">
+          <article class="panel process-card noise-card">
+            <div class="process-copy">
+              <span class="process-step">00</span>
+              <h3>Zgomotul necumulat</h3>
+              <div class="process-formula">
+                Z<sub>i</sub> ~ N(0,1), &nbsp; ΔB<sub>i</sub> = √Δt · Z<sub>i</sub>
+              </div>
+              <p>
+                Fiecare bară este un șoc nou și independent. Nu există încă o traiectorie: vedem
+                incrementările care vor fi însumate.
+              </p>
+              <ul>
+                <li>Șocurile pozitive și negative alternează aleator.</li>
+                <li>Media lor tinde către zero.</li>
+                <li>Prin cumulare obținem mișcarea browniană B.</li>
+              </ul>
+            </div>
+            <div class="process-chart">
+              <div id="bmNoiseChart"></div>
+              <div class="chart-caption" id="bmNoiseStats"></div>
+            </div>
+          </article>
+          <article class="panel process-card">
+            <div class="process-copy">
+              <span class="process-step">01</span>
+              <h3>Mișcarea browniană standard</h3>
+              <div class="process-formula">
+                B<sub>t+dt</sub> = B<sub>t</sub> + √dt · Z, &nbsp; Z ~ N(0,1)
+              </div>
+              <p>
+                Pornește din zero, are incrementări independente și continue. Media rămâne zero, iar
+                varianța crește liniar cu timpul: Var(B<sub>t</sub>) = t.
+              </p>
+              <ul>
+                <li>Nu are o direcție deterministă.</li>
+                <li>Traiectoriile sunt continue, dar nu sunt derivabile.</li>
+                <li>Împrăștierea tipică la momentul t este √t.</li>
+              </ul>
+            </div>
+            <div class="process-chart">
+              <div id="bmStandardChart"></div>
+              <div class="chart-caption" id="bmStandardStats"></div>
+            </div>
+          </article>
+          <article class="panel process-card">
+            <div class="process-copy">
+              <span class="process-step">02</span>
+              <h3>Mișcarea browniană generalizată</h3>
+              <div class="process-formula">dX<sub>t</sub> = μ dt + σ dB<sub>t</sub></div>
+              <p>
+                Adăugăm o tendință deterministă μ și scalăm zgomotul cu σ. Într-un interval scurt,
+                schimbarea așteptată este μdt, iar abaterea standard este σ√dt.
+              </p>
+              <ul>
+                <li>E[X<sub>t</sub>] = X<sub>0</sub> + μt.</li>
+                <li>Var(X<sub>t</sub>) = σ²t.</li>
+                <li>Procesul poate lua și valori negative.</li>
+              </ul>
+            </div>
+            <div class="process-chart">
+              <div id="bmGeneralChart"></div>
+              <div class="chart-caption" id="bmGeneralStats"></div>
+            </div>
+          </article>
+          <article class="panel process-card">
+            <div class="process-copy">
+              <span class="process-step">03</span>
+              <h3>Mișcarea browniană geometrică</h3>
+              <div class="process-formula">
+                dS<sub>t</sub> = μS<sub>t</sub>dt + σS<sub>t</sub>dB<sub>t</sub>
+              </div>
+              <p>
+                Șocurile devin procentuale. Soluția exactă este lognormală și menține prețul
+                pozitiv:
+              </p>
+              <div class="process-formula small">
+                S<sub>t</sub> = S<sub>0</sub> exp[(μ − σ²/2)t + σB<sub>t</sub>]
+              </div>
+              <ul>
+                <li>Randamentele logaritmice sunt normale.</li>
+                <li>−σ²/2 este corecția Itô.</li>
+                <li>Acesta este procesul activului în Black–Scholes.</li>
+              </ul>
+            </div>
+            <div class="process-chart">
+              <div id="bmGeometricChart"></div>
+              <div class="chart-caption" id="bmGeometricStats"></div>
+            </div>
+          </article>
+          <article class="panel process-card dist-card">
+            <div class="process-copy">
+              <span class="process-step">04</span>
+              <h3>De ce randamentul logaritmic este normal</h3>
+              <div class="process-formula">
+                ln(S<sub>T</sub>/S<sub>0</sub>) = (μ−σ²/2)T + σ√Δt·Σ<sub>i</sub>Z<sub>i</sub>
+              </div>
+              <p>
+                Pe fiecare interval Δt, modelul adaugă un șoc independent, σ√Δt·Z<sub>i</sub>, la
+                randamentul logaritmic. Suma acestor șocuri este normal distribuită; prin urmare, în
+                modelul brownian geometric, randamentul logaritmic final are exact o distribuție
+                normală. În schimb, deoarece prețul se obține prin exponentiere, S<sub>T</sub> are o
+                distribuție lognormală, pozitivă și de regulă asimetrică.
+              </p>
+              <ul>
+                <li>
+                  Fiecare linie subțire reprezintă o evoluție posibilă a variabilei selectate până
+                  la momentul T.
+                </li>
+                <li>
+                  Histograma sintetizează valorile terminale rezultate din toate traiectoriile
+                  simulate.
+                </li>
+                <li>
+                  Curba punctată reprezintă densitatea teoretică: normală pentru randamentul
+                  logaritmic și lognormală pentru preț.
+                </li>
+              </ul>
+            </div>
+            <div class="process-chart">
+              <div class="hedge-controls">
+                <label
+                  >Traiectorii<select id="bmDistN">
+                    <option value="150">150</option>
+                    <option value="400" selected>400</option>
+                    <option value="800">800</option>
+                  </select></label
+                ><label
+                  >Variabilă urmărită<select id="bmDistVar">
+                    <option value="return" selected>Randament logaritmic</option>
+                    <option value="price">Preț</option>
+                  </select></label
+                >
+              </div>
+              <div id="bmDistChart"></div>
+              <div class="chart-caption" id="bmDistStats"></div>
+            </div>
+          </article>
+          <article class="panel process-card ci-card">
+            <div class="process-copy">
+              <span class="process-step">05</span>
+              <h3>Interval de predicție pentru preț</h3>
+              <div class="process-formula">
+                ln(S<sub>T₁+T₂</sub>/S<sub>T₁</sub>) ~ N((μ−σ²/2)T<sub>2</sub>, σ²T<sub>2</sub>)
+              </div>
+              <p>
+                Mai întâi simulăm o traiectorie a prețului până la momentul T<sub>1</sub>. Valoarea
+                observată atunci, marcată „astăzi”, devine punctul de plecare al previziunii.
+                Condiționat de acest preț și de parametrii modelului, calculăm mediana și intervalul
+                central în care prețul la T<sub>1</sub> + T<sub>2</sub> se va afla cu probabilitatea
+                aleasă.
+              </p>
+              <div class="process-formula small">
+                IP<sub>1−α</sub> = S<sub>T₁</sub>·exp[(μ−σ²/2)T<sub>2</sub> ±
+                z<sub>1−α/2</sub>σ√T<sub>2</sub>]
+              </div>
+              <ul>
+                <li>
+                  Cercul și linia verticală indică momentul T<sub>1</sub>, de la care începe
+                  proiecția.
+                </li>
+                <li>
+                  Linia punctată este mediana condiționată a prețului viitor; ea nu coincide
+                  neapărat cu valoarea medie.
+                </li>
+                <li>
+                  Banda se extinde pe măsură ce cresc orizontul T<sub>2</sub> sau volatilitatea σ.
+                </li>
+                <li>
+                  Acesta este un interval de predicție al modelului, nu un interval de încredere
+                  pentru o medie estimată.
+                </li>
+              </ul>
+            </div>
+            <div class="process-chart">
+              <div id="bmCIChart"></div>
+              <div class="ci-legend">
+                <span><i></i>preț simulat</span
+                ><span><i class="band"></i>interval de predicție</span
+                ><span><i class="today"></i>astăzi</span>
+              </div>
+              <div class="chart-caption" id="bmCIStats"></div>
+              <button class="btn primary" id="bmCiResim" type="button" style="margin: 10px 0">
+                Regenerare preț
+              </button>
+              <div class="ci-controls">
+                <div>
+                  <label class="fl" for="bmCiS0">Preț inițial S₀</label
+                  ><input id="bmCiS0" type="number" value="100" min="0.01" step="1" />
+                </div>
+                <div>
+                  <label class="fl" for="bmCiT1">Orizont simulat T₁ (ani)</label
+                  ><input id="bmCiT1" type="number" value="1" min="0.1" step="0.1" />
+                </div>
+                <div>
+                  <label class="fl" for="bmCiT2">Orizont de predicție T₂ (ani)</label
+                  ><input id="bmCiT2" type="number" value="0.5" min="0.1" step="0.1" />
+                </div>
+                <div>
+                  <label class="fl" for="bmCiMu">Drift μ (%)</label
+                  ><input id="bmCiMu" type="number" value="8" step="1" />
+                </div>
+                <div>
+                  <label class="fl" for="bmCiSigma">Volatilitate σ (%)</label
+                  ><input id="bmCiSigma" type="number" value="25" min="0.1" step="1" />
+                </div>
+                <div>
+                  <label class="fl" for="bmConfidence">Nivel de acoperire</label
+                  ><select id="bmConfidence">
+                    <option value="0.80">80%</option>
+                    <option value="0.90">90%</option>
+                    <option value="0.95" selected>95%</option>
+                    <option value="0.99">99%</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===================== TAB: GREEKS ===================== -->
+      <section class="tabpane" id="pane-greeks" hidden>
+        <div class="lab-hero greeks-hero">
+          <div>
+            <div class="eyebrow">RISK LAB</div>
+            <h2>Greeks — harta riscului unei opțiuni</h2>
+            <p>
+              Greeks nu prezic piața. Ei măsoară local cum se modifică valoarea teoretică atunci
+              când mișcăm câte un factor, păstrându-i pe ceilalți constanți.
+            </p>
+          </div>
+          <div class="formula-chip">dV ≈ ΔdS + ½Γ(dS)² + Vega·dσ + Θdt + ρdr</div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>Contract analizat</h3></div>
+          <div class="pb lab-controls greeks-controls">
+            <div>
+              <label class="fl">Tip</label
+              ><select id="gType">
+                <option value="call">Call</option>
+                <option value="put">Put</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Poziție</label
+              ><select id="gSide">
+                <option value="1">Long</option>
+                <option value="-1">Short</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Portofoliu</label
+              ><select id="gPortfolio">
+                <option value="single">Plain vanilla</option>
+                <option value="bull">Bull call spread</option>
+                <option value="butterfly">Call butterfly</option>
+                <option value="condor">Iron condor</option>
+                <option value="straddle">Long straddle</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Spot S₀</label
+              ><input id="gSpot" type="number" value="100" min="1" step="1" />
+            </div>
+            <div>
+              <label class="fl">Strike K</label
+              ><input id="gStrike" type="number" value="100" min="1" step="1" />
+            </div>
+            <div>
+              <label class="fl">Scadență (zile)</label
+              ><input id="gDays" type="number" value="90" min="1" max="3650" />
+            </div>
+            <div>
+              <label class="fl">Volatilitate (%)</label
+              ><input id="gVol" type="number" value="25" min="0.1" step="1" />
+            </div>
+            <div>
+              <label class="fl">Rată fără risc (%)</label
+              ><input id="gRate" type="number" value="5" step="0.25" />
+            </div>
+            <div>
+              <label class="fl">Pas strike (chain)</label
+              ><input id="gStrikeStep" type="number" value="5" min="0.5" step="0.5" />
+            </div>
+            <div>
+              <label class="fl">Ax grafice</label
+              ><select id="gAxis">
+                <option value="spot">Spot</option>
+                <option value="days">Zile până la scadență</option>
+                <option value="vol">Volatilitate</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint" id="gLegsHint" style="padding: 0 14px 14px"></div>
+        </div>
+        <div class="greek-cards" id="greekCards"></div>
+        <div class="panel greek-main-chart">
+          <div class="ph">
+            <h3 id="greekValueTitle">P&amp;L al portofoliului</h3>
+            <div class="legend">
+              <span><span class="sw" style="background: var(--accent)"></span>astăzi</span
+              ><span id="legExpiry"
+                ><span class="sw" style="background: var(--s2)"></span>la scadență</span
+              >
+            </div>
+          </div>
+          <div class="pb"><div id="greekValueChart"></div></div>
+        </div>
+        <div class="greek-chart-grid">
+          <div class="panel">
+            <div class="ph"><h3>Delta și Gamma</h3></div>
+            <div class="pb" id="deltaGammaChart"></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>Vega, Theta și Rho</h3></div>
+            <div class="pb" id="vegaThetaChart"></div>
+          </div>
+        </div>
+        <div class="greek-guide" id="greekGuide"></div>
+        <div class="panel">
+          <div class="ph"><h3>Aproximarea unei variații de preț</h3></div>
+          <div class="pb">
+            <div class="shock-controls">
+              <label>ΔS <input id="gShockS" type="number" value="2" step="0.5" /></label
+              ><label>Δσ (puncte %) <input id="gShockV" type="number" value="1" step="0.5" /></label
+              ><label
+                >Δt (zile) <input id="gShockT" type="number" value="1" min="0" step="1" /></label
+              ><label
+                >Δr (puncte %) <input id="gShockR" type="number" value="0" step="0.25"
+              /></label>
+            </div>
+            <div class="greek-attribution" id="greekAttribution"></div>
+          </div>
+        </div>
+        <div class="panel greek-formulas">
+          <div class="ph"><h3>Formulele Greeks în modelul Black–Scholes</h3></div>
+          <div class="pb">
+            <div class="formula-foundation">
+              <div>
+                <b>Mai întâi calculăm</b><span>d<sub>1</sub> = [ln(S/K) + (r + σ²/2)T] / (σ√T)</span
+                ><span>d<sub>2</sub> = d<sub>1</sub> − σ√T</span>
+              </div>
+              <p>
+                N(·) este funcția de repartiție normală standard, iar φ(·) este densitatea normală.
+                Formulele de mai jos sunt pentru opțiuni europene pe o acțiune fără dividende.
+              </p>
+            </div>
+            <div class="formula-grid">
+              <div>
+                <b>Delta call</b><span>Δ<sub>c</sub> = N(d<sub>1</sub>)</span>
+              </div>
+              <div>
+                <b>Delta put</b><span>Δ<sub>p</sub> = N(d<sub>1</sub>) − 1</span>
+              </div>
+              <div><b>Gamma</b><span>Γ = φ(d<sub>1</sub>) / (Sσ√T)</span></div>
+              <div><b>Vega</b><span>ν = Sφ(d<sub>1</sub>)√T</span></div>
+              <div>
+                <b>Theta call</b
+                ><span
+                  >Θ<sub>c</sub> = −Sφ(d<sub>1</sub>)σ/(2√T) −
+                  rKe<sup>−rT</sup>N(d<sub>2</sub>)</span
+                >
+              </div>
+              <div>
+                <b>Theta put</b
+                ><span
+                  >Θ<sub>p</sub> = −Sφ(d<sub>1</sub>)σ/(2√T) +
+                  rKe<sup>−rT</sup>N(−d<sub>2</sub>)</span
+                >
+              </div>
+              <div>
+                <b>Rho call</b><span>ρ<sub>c</sub> = KTe<sup>−rT</sup>N(d<sub>2</sub>)</span>
+              </div>
+              <div>
+                <b>Rho put</b><span>ρ<sub>p</sub> = −KTe<sup>−rT</sup>N(−d<sub>2</sub>)</span>
+              </div>
+              <div><b>Nabla call</b><span>∂c/∂K = −e<sup>−rT</sup>N(d<sub>2</sub>)</span></div>
+              <div><b>Nabla put</b><span>∂p/∂K = e<sup>−rT</sup>N(−d<sub>2</sub>)</span></div>
+            </div>
+            <div class="note">
+              În carduri, Vega și Rho sunt transformate la o variație de <b>1 punct procentual</b>,
+              Theta la <b>o zi</b>, iar toate expunerile sunt scalate pentru
+              <b>un contract de 100</b>.
+            </div>
+            <div class="note">
+              Δ = N(d<sub>1</sub>) <b>nu</b> este probabilitatea de exercitare — aceea este
+              N(d<sub>2</sub>) sub măsura risc-neutră. Δ este doar panta locală a prețului față de
+              spot.
+            </div>
+            <div class="note">
+              Pentru un portofoliu delta-hedgeat, Θ ≈ −½Γσ²S²: Theta este, în esență, prețul plătit
+              pentru Gamma. Vanna, Volga și Charm sunt Greeks de ordinul doi, utile când se combină
+              mai mulți factori simultan.
+            </div>
+          </div>
+        </div>
+        <div class="panel hedge-lab">
+          <div class="ph">
+            <div>
+              <h3>Delta-hedging dinamic</h3>
+              <div class="hint">Acoperirea portofoliului selectat mai sus</div>
+            </div>
+            <button class="btn primary" id="hedgeResim" type="button">Traiectorie nouă</button>
+          </div>
+          <div class="pb">
+            <div class="hedge-intro">
+              <p>
+                Luăm portofoliul selectat și tranzacționăm <b>−Δ × 100</b> acțiuni pentru a
+                neutraliza expunerea direcțională. Pe măsură ce spotul se schimbă, Delta se modifică
+                din cauza Gamma, iar hedge-ul trebuie reechilibrat.
+              </p>
+              <div class="formula-chip">Acțiuni pentru hedge = −Δ<sub>portofoliu</sub> × 100</div>
+            </div>
+            <div class="hedge-controls">
+              <label
+                >Reechilibrare<select id="hedgeFreq">
+                  <option value="5">5 ori</option>
+                  <option value="12">12 ori</option>
+                  <option value="30" selected>30 ori</option>
+                  <option value="90">90 ori</option>
+                </select></label
+              ><label>Drift real μ (%)<input id="hedgeMu" type="number" value="8" step="1" /></label
+              ><label
+                >Volatilitate realizată (%)<input
+                  id="hedgeVolReal"
+                  type="number"
+                  value="25"
+                  min="0.1"
+                  step="1"
+              /></label>
+            </div>
+            <div class="hint">
+              Hedge-ul se rebalansează cu Delta calculată la volatilitatea implicită (câmpul
+              „Volatilitate” din contract), dar spotul evoluează cu volatilitatea realizată de mai
+              sus. Dacă cele două diferă, eroarea de hedging nu mai este zgomot — devine
+              sistematică: ≈ ½Γ(σ²<sub>realizat</sub> − σ²<sub>implicit</sub>)S²dt pe fiecare pas.
+            </div>
+            <div class="hedge-results" id="hedgeResults"></div>
+            <div class="greek-chart-grid hedge-charts">
+              <div>
+                <div class="greek-mini-title">Traiectoria spotului (o simulare)</div>
+                <div id="hedgeSpotChart"></div>
+              </div>
+              <div>
+                <div class="greek-mini-title">Acțiunile deținute pentru hedge</div>
+                <div id="hedgeDeltaChart"></div>
+              </div>
+            </div>
+            <div class="panel" style="margin-top: 14px">
+              <div class="ph"><h3>Distribuția erorii de hedging (150 traiectorii)</h3></div>
+              <div class="pb">
+                <div id="hedgeErrorChart"></div>
+                <div class="chart-caption" id="hedgeErrorStats"></div>
+              </div>
+            </div>
+            <div class="scrollx" id="hedgeTable"></div>
+            <div class="note warn">
+              Model educațional: presupune tranzacționare fără costuri, lichiditate perfectă și
+              volatilitate implicită constantă. În practică, spread-urile, comisioanele, salturile
+              de preț și volatilitatea variabilă produc eroare de hedging suplimentară.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div class="wrap">
+        Aplicație didactică pentru cursul de inginerie financiară. Toate calculele se execută local,
+        în browser.
+      </div>
+    </footer>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
