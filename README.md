@@ -1,5 +1,7 @@
 # Inginerie_Financiara_ASE
 
+[Deschide aplicația pe GitHub Pages](https://gdragon2077.github.io/Inginerie_Financiara_ASE/)
+
 Laborator interactiv în limba română pentru opțiuni, strategii, procese stocastice și modele de evaluare. Aplicația rulează local în browser; nu are backend, chei API sau dependențe de servicii de cotații.
 
 ## Pornire
