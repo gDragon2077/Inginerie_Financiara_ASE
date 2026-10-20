@@ -24,15 +24,13 @@ Directorul `dist/` poate fi servit de un server HTTP static. Modulele ES necesit
 
 ### GitHub Pages
 
-Publicarea curentă folosește **GitHub Actions** ca sursă în Settings → Pages. Workflow-ul `.github/workflows/ci.yml` verifică formatarea, rulează testele și compilează aplicația. Numai la un push în `main`, după trecerea tuturor verificărilor, publică întregul director `dist/` în mediul `github-pages`. Pull request-urile sunt doar verificate, fără publicare.
+Publicarea curentă folosește **GitHub Actions** ca sursă în Settings → Pages. Workflow-ul `.github/workflows/ci.yml` verifică formatarea și compilează aplicația. Numai la un push în `main`, după trecerea acestor verificări, publică întregul director `dist/` în mediul `github-pages`. Pull request-urile sunt doar verificate, fără publicare.
 
 Configurația Vite păstrează prefixul `/Inginerie_Financiara_ASE/` pentru fișierele compilate. `npm run preview` afișează această variantă sub același prefix. Dacă publici proiectul într-un alt director sau sub alt nume de repository, actualizează `base` din `vite.config.js`.
 
-Permisiunile `pages: write` și `id-token: write` sunt limitate la jobul de publicare, separat de instalarea dependențelor și de teste. Identitatea temporară GitHub verifică originea publicării; nu este necesar un token personal. Fiecare încercare de build are un artefact cu nume distinct, iar jobul de publicare primește exact numele artefactului verificat, inclusiv la reluarea unui job eșuat. Publicările sunt serializate.
+Permisiunile `pages: write` și `id-token: write` sunt limitate la jobul de publicare, separat de instalarea dependențelor și de compilare. Identitatea temporară GitHub verifică originea publicării; nu este necesar un token personal. Fiecare încercare de build are un artefact cu nume distinct, iar jobul de publicare primește exact numele artefactului verificat, inclusiv la reluarea unui job eșuat. Publicările sunt serializate.
 
 Aplicația poate fi servită și fără compilare: codul folosește module ES native și CSS standard. Căile relative din `index.html` încarcă resursele din directorul proiectului, nu din rădăcina domeniului. Acesta nu este modul curent de publicare pe GitHub Pages.
-
-Testul `tests/deployment.test.js` servește aplicația într-un subdirector și verifică prin HTTP toate importurile CSS/JavaScript accesibile din pagină, pentru a detecta căile care ar ieși din directorul proiectului.
 
 ## Funcționalități păstrate
 
@@ -43,7 +41,7 @@ Testul `tests/deployment.test.js` servește aplicația într-un subdirector și 
 - Exerciții BS/CRR generate automat, verificarea răspunsurilor, soluții și scoruri separate.
 - Interfață responsive, teme și interacțiuni mouse/touch pe grafice.
 
-Laboratorul separat Greeks/delta-hedging este păstrat și testat. Rămâne ascuns în navigația implicită, la fel ca în fișierul primit; Greeks agregate din builder sunt vizibile. Activarea laboratorului separat presupune eliminarea atributelor `hidden` de pe butonul `data-tab="greeks"` și secțiunea `pane-greeks` din `index.html`.
+Laboratorul separat Greeks/delta-hedging este păstrat. Rămâne ascuns în navigația implicită, la fel ca în fișierul primit; Greeks agregate din builder sunt vizibile. Activarea laboratorului separat presupune eliminarea atributelor `hidden` de pe butonul `data-tab="greeks"` și secțiunea `pane-greeks` din `index.html`.
 
 ## Structură
 
@@ -76,7 +74,6 @@ src/
     scheduler.js            Gruparea randărilor și afișarea erorilor
     shell.js                Navigație și temă
   styles/                   Tokens, bază, componente, strategii, laboratoare, responsive
-tests/                      Teste financiare, simulări, stare și integrare UI
 .github/workflows/ci.yml     Verificări și publicarea buildului validat din main
 ```
 
@@ -106,15 +103,12 @@ Randările costisitoare sunt grupate prin `requestAnimationFrame`, cu maximum o 
 ## Verificări
 
 ```sh
-npm test
-npm run test:coverage
 npm run format:check
 npm run build
+npm run preview
 ```
 
-Testele verifică benchmark-uri BS, paritate pentru toate cele șase configurații, Greeks prin diferențe finite, forward/decontare amânată, convergență CRR, exercitare americană, cazuri-limită și intrări invalide. Alte teste acoperă payoff-uri exacte, unități, distribuții reproductibile, contabilitatea autofinanțată a hedgingului și store-ul.
-
-Testul de integrare folosește JSDOM și parcurge selecția pozițiilor, cantitățile, scadențele, scenariile, formularele BS/CRR, validarea, simulările, temele și laboratorul Greeks/hedging. JSDOM nu înlocuiește verificarea vizuală într-un browser real; aceasta este necesară când schimbi layout-ul sau interacțiunile SVG.
+Repository-ul nu include o suită de teste automate. Verificările de formatare și compilare nu validează corectitudinea calculelor financiare. După modificări, verifică manual rezultatele modelelor, selecția pozițiilor, formularele, exercițiile, simulările, temele și graficele în versiunea afișată de `npm run preview`.
 
 ## Migrare și mentenanță
 
@@ -122,6 +116,6 @@ Sursa primită: `Pasted text.txt`, SHA-256 `27fa73686f2b9890e160a1d25fed392e3660
 
 Migrarea include corecții pentru discountarea la volatilitate zero, Rho când cost-of-carry este zero, sensibilitățile forwardurilor inferate și Theta la decontare amânată. Distribuția randamentelor logaritmice folosește aceeași corecție Itô ca procesul geometric, iar BID nu poate depăși prețul mediu/ASK. CSS-ul are definiții consolidate pe selector și condiție media, cu override-urile finale absorbite în stilurile componentelor.
 
-Pentru o funcționalitate nouă: implementează și testează întâi funcția pură în `domain/`, adaugă datele în store, apoi selectorul și interacțiunea UI. Evită citirile DOM în motorul financiar și adăugarea unor corecții CSS la sfârșitul fișierelor; modifică regula componentei și breakpoint-ul corespunzător.
+Pentru o funcționalitate nouă: implementează întâi funcția pură în `domain/` și verifică manual rezultatele, adaugă datele în store, apoi selectorul și interacțiunea UI. Evită citirile DOM în motorul financiar și adăugarea unor corecții CSS la sfârșitul fișierelor; modifică regula componentei și breakpoint-ul corespunzător.
 
 Licența existentă a repository-ului este păstrată în `LICENSE`.
