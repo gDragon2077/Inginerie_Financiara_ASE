@@ -20,6 +20,14 @@ npm run preview
 
 Directorul `dist/` poate fi servit de un server HTTP static. Modulele ES necesită HTTP; deschiderea directă a fișierului HTML prin `file://` nu este modul de rulare suportat.
 
+### GitHub Pages
+
+Aplicația poate fi publicată direct din ramura `main`, directorul `/ (root)`, folosind GitHub Pages. Codul din browser folosește module ES native și CSS standard, fără dependențe care ar necesita transformare la rulare. Căile din `index.html` sunt relative la directorul paginii, astfel încât CSS-ul și JavaScript-ul se încarcă din `/Inginerie_Financiara_ASE/src/`, nu din rădăcina domeniului.
+
+Pentru o publicare optimizată, rulează `npm run build` și publică întregul conținut din `dist/`. Configurația Vite păstrează prefixul `/Inginerie_Financiara_ASE/` și pentru fișierele compilate. `npm run preview` afișează această variantă sub același prefix. Dacă publici proiectul într-un alt director sau sub alt nume de repository, actualizează `base` din `vite.config.js`.
+
+Testul `tests/deployment.test.js` servește aplicația într-un subdirector și verifică prin HTTP toate importurile CSS/JavaScript accesibile din pagină, pentru a detecta căile care ar ieși din directorul proiectului.
+
 ## Funcționalități păstrate
 
 - Option chain simulat, BID/ASK, 13 strategii predefinite și builder cu poziții long/short, cantități, loturi spot, scadențe multiple, scenarii, payoff și Greeks agregați.
